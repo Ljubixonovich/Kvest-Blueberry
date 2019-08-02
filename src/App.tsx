@@ -4,13 +4,32 @@ import './App.css';
 
 const daysPerPage = 3;
 
-class App extends React.Component {
+interface State {
+   calendar: [
+      {
+         date: string,
+         timeslots: [
+            {
+               from: string,
+               to: string,
+               id: string,
+               status: string
+            }
+         ]
+      }
+   ],
+   selectedItemId: string,
+   selectedDayIndex: number,
+   currentDay: any
+}
 
-   constructor(props) {
+class App extends React.Component<any, State> {
+
+   constructor(props: any) {
       super(props);
       this.state = {
-         calendar: [],
-         selectedItemId: null,
+         calendar: [] as any,
+         selectedItemId: '',
          selectedDayIndex: 0,
          currentDay: null
       };
@@ -40,14 +59,14 @@ class App extends React.Component {
          })
    }
 
-   onSelectItem = (id) => {
+   onSelectItem = (id: string) => {
       this.setState(state => ({
          ...state,
          selectedItemId: id
       }));
    }
 
-   getDaysForDisplay(allDays, currentIndex) {
+   getDaysForDisplay(allDays: any, currentIndex: number) {
       currentIndex = currentIndex || 0;
       const newDays = [];
       let day;
@@ -88,27 +107,32 @@ class App extends React.Component {
       }));
    }
 
-   showData = (date) => {     
+   showData = (date: string) => {     
       return this.state.currentDay === date;
    }
 
 
    render() {
       const { calendar, selectedItemId, selectedDayIndex } = this.state;
-      let days = this.getDaysForDisplay(calendar, selectedDayIndex);
+      let days;
+      console.log('render', calendar);
+      if (calendar && calendar.length > 0 ) {
+         days = this.getDaysForDisplay(calendar, selectedDayIndex);
+      }
       return (
          <div className="App">
-            {calendar.length > 0 &&
+            {calendar !== null && calendar.length > 0 ?
                <>
-               <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
-               <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
+                  <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
+                  <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
                </>
+               : null
             }
             {calendar.length > 0 ?
                <div>
                   <div className="div-inline">
                      <p className="header-date">Choose timeslot</p>
-                     {calendar[0].timeslots.map(t => (
+                     {calendar[0].timeslots.map((t: any) => (
                         <p key={t.id}>{`${t.from} - ${t.to}`}</p>
                      ))}
                   </div>
@@ -118,7 +142,7 @@ class App extends React.Component {
                         ${() => this.showData(day.date) ? 'hide' : ''}`}
                      >
                         <p className="header-date">{day.date}</p>
-                        {day.timeslots.map(t => (
+                        {day.timeslots.map((t: any) => (
                            <p key={t.id}
                               className={` 
                                  ${t.id === selectedItemId ? 'selected-item' : ''}
