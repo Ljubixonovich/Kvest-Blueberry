@@ -2,6 +2,8 @@ import React from 'react';
 import './App.css';
 
 
+const daysPerPage = 3;
+
 class App extends React.Component {
 
    constructor(props) {
@@ -9,6 +11,7 @@ class App extends React.Component {
       this.state = {
          calendar: [],
          selectedItemId: null,
+         selectedDayIndex: 0,
          currentDay: null
       };
       this.onSelectItem = this.onSelectItem.bind(this);
@@ -44,62 +47,95 @@ class App extends React.Component {
       }));
    }
 
-   onDayBefore = () => {
+   getDaysForDisplay(allDays, currentIndex) {
+      currentIndex = currentIndex || 0;
+      const newDays = [];
+      let day;
 
+      if (allDays.length >= currentIndex + daysPerPage) {
+         for (let i = 0; i < daysPerPage; i++) {
+            day = allDays[currentIndex];
+            newDays.push(day);
+            currentIndex++;
+         }
+      }
+      return newDays; 
+   }
+
+   onDayBefore = () => {
+      const {selectedDayIndex} = this.state;
+      if (selectedDayIndex < 1 ) {
+         return;
+      }
+      let newDayIndex = selectedDayIndex;
+      newDayIndex = newDayIndex - 1;
+      this.setState(state => ({
+         ...state,
+         selectedDayIndex: newDayIndex
+      }));
    }
 
    onDayAfter = () => {
-
+      const {calendar, selectedDayIndex} = this.state;
+      if (selectedDayIndex > -1 && calendar.length < selectedDayIndex + daysPerPage + 1) {
+         return;
+      }
+      let newDayIndex = selectedDayIndex;
+      newDayIndex = newDayIndex + 1;
+      this.setState(state => ({
+         ...state,
+         selectedDayIndex: newDayIndex
+      }));
    }
 
-   showData = (date) => {
-      console.log(this.state.currentDay);
-      if (this.state.currentDay === date) {
-         return true;
-      } else {
-         return false;
-      }
+   showData = (date) => {     
+      return this.state.currentDay === date;
    }
 
 
    render() {
-      const { calendar, selectedItemId } = this.state;
+      const { calendar, selectedItemId, selectedDayIndex } = this.state;
+      let days = this.getDaysForDisplay(calendar, selectedDayIndex);
       return (
-         <>
-            <div className="App">
-               {calendar.length > 0 ?
-                  <div>
-                     <div className="div-inline">
-                        <p>Choose timeslot</p>
-                        {calendar[0].timeslots.map(t => (
-                           <p key={t.id}>{`${t.from} - ${t.to}`}</p>
+         <div className="App">
+            {calendar.length > 0 &&
+               <>
+               <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
+               <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
+               </>
+            }
+            {calendar.length > 0 ?
+               <div>
+                  <div className="div-inline">
+                     <p className="header-date">Choose timeslot</p>
+                     {calendar[0].timeslots.map(t => (
+                        <p key={t.id}>{`${t.from} - ${t.to}`}</p>
+                     ))}
+                  </div>
+
+                  {days.map((day, index) => (
+                     <div key={index} className={`div-inline 
+                        ${() => this.showData(day.date) ? 'hide' : ''}`}
+                     >
+                        <p className="header-date">{day.date}</p>
+                        {day.timeslots.map(t => (
+                           <p key={t.id}
+                              className={` 
+                                 ${t.id === selectedItemId ? 'selected-item' : ''}
+                                 ${t.status === 'free' && 'status-selected'} `}
+                              onClick={t.status === 'free' ? 
+                                 () => this.onSelectItem(t.id) : null}
+                           >
+                              {t.status}
+                           </p>
                         ))}
                      </div>
-                     {calendar.map(day => (
-                        <div key={day.date} className={`div-inline 
-                           ${() => this.showData(day.date) ? 'hide' : ''}`}
-                        >
-                           <p className="header-date">{day.date}</p>
-                           {day.timeslots.map(t => (
-                              <p key={t.id}
-                                 className={` 
-                                    ${t.id === selectedItemId ? 'selected-item' : ''}
-                                    ${t.status === 'free' && 'status-selected'} `}
-                                 onClick={t.status === 'free' ? () => this.onSelectItem(t.id) : null}
-                              >
-                                 {t.status}
-                              </p>
-                           ))}
-                        </div>
-                     ))}
+                  ))}
 
-                  </div>
-                  :
-                  'empty calendar'}
-            </div>
-            <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
-            <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
-         </>
+               </div>
+               :
+               'empty calendar'}                  
+         </div>  
       );
    }
 }
