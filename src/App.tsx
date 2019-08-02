@@ -18,6 +18,7 @@ interface State {
          ]
       }
    ],
+   numberOfSelectedItems: number,
    selectedItemId: string,
    selectedDayIndex: number,
    boldedTime: string,
@@ -30,15 +31,17 @@ class App extends React.Component<any, State> {
       super(props);
       this.state = {
          calendar: [] as any,
+         numberOfSelectedItems: 1,
          selectedItemId: '',
          selectedDayIndex: 0,
-         currentDay: null,
-         boldedTime: ''
+         boldedTime: '',
+         currentDay: null         
       };
       this.onSelectItem = this.onSelectItem.bind(this);
       this.onDayBefore = this.onDayBefore.bind(this);
       this.onDayAfter = this.onDayAfter.bind(this);
       this.showData = this.showData.bind(this);
+      this.onSelectChange = this.onSelectChange.bind(this);
    }
 
    componentDidMount() {
@@ -61,6 +64,14 @@ class App extends React.Component<any, State> {
          })
    }
 
+   onSelectChange = (e: React.FormEvent<HTMLSelectElement>) => {      
+      const value = +e.currentTarget.value;
+      this.setState(state => ({
+         ...state,
+         numberOfSelectedItems: value
+      }));
+   }
+
    onSelectItem = (id: string, fromTime: string) => {
       this.setState(state => ({
          ...state,
@@ -81,12 +92,12 @@ class App extends React.Component<any, State> {
             currentIndex++;
          }
       }
-      return newDays; 
+      return newDays;
    }
 
    onDayBefore = () => {
-      const {selectedDayIndex} = this.state;
-      if (selectedDayIndex < 1 ) {
+      const { selectedDayIndex } = this.state;
+      if (selectedDayIndex < 1) {
          return;
       }
       let newDayIndex = selectedDayIndex;
@@ -98,7 +109,7 @@ class App extends React.Component<any, State> {
    }
 
    onDayAfter = () => {
-      const {calendar, selectedDayIndex} = this.state;
+      const { calendar, selectedDayIndex } = this.state;
       if (selectedDayIndex > -1 && calendar.length < selectedDayIndex + daysPerPage + 1) {
          return;
       }
@@ -110,28 +121,37 @@ class App extends React.Component<any, State> {
       }));
    }
 
-   showData = (date: string) => {     
+   showData = (date: string) => {
       return this.state.currentDay === date;
    }
 
 
    render() {
-      const { calendar, selectedItemId, selectedDayIndex, boldedTime } = this.state;
+      const { 
+         calendar, 
+         selectedItemId, 
+         selectedDayIndex, 
+         boldedTime, 
+         numberOfSelectedItems 
+      } = this.state;
       let days;
-      console.log('render', calendar);
-      if (calendar && calendar.length > 0 ) {
+      
+      if (calendar && calendar.length > 0) {
          days = this.getDaysForDisplay(calendar, selectedDayIndex);
       }
       return (
-         <div className="App">
-            {calendar !== null && calendar.length > 0 ?
-               <>
-                  <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
-                  <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
-               </>
-               : null
-            }
-            {calendar.length > 0 ?
+         <>
+         {calendar && calendar.length > 0 ?
+            <div className="App">
+               <select className='select' onChange={(e) => this.onSelectChange(e)} 
+                  value={numberOfSelectedItems}>
+                  <option value={1}>1</option>
+                  <option value={3}>3</option>
+                  <option value={6}>6</option>
+               </select>
+               <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
+               <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
+       
                <div>
                   <div className="div-inline">
                      <p className="header-date">Choose timeslot</p>
@@ -144,15 +164,15 @@ class App extends React.Component<any, State> {
 
                   {days.map((day, index) => (
                      <div key={index} className={`div-inline 
-                        ${() => this.showData(day.date) ? 'hide' : ''}`}
+                     ${() => this.showData(day.date) ? 'hide' : ''}`}
                      >
                         <p className="header-date">{day.date}</p>
                         {day.timeslots.map((t: any) => (
                            <p key={t.id}
                               className={` 
-                                 ${t.id === selectedItemId ? 'selected-item' : ''}
-                                 ${t.status === 'free' && 'status-selected'} `}
-                              onClick={t.status === 'free' ? 
+                              ${t.id === selectedItemId ? 'selected-item' : ''}
+                              ${t.status === 'free' && 'status-selected'} `}
+                              onClick={t.status === 'free' ?
                                  () => this.onSelectItem(t.id, t.from) : null}
                            >
                               {t.status}
@@ -160,11 +180,11 @@ class App extends React.Component<any, State> {
                         ))}
                      </div>
                   ))}
-
                </div>
-               :
-               'empty calendar'}                  
-         </div>  
+            </div>
+            :
+            'empty calendar'}
+         </>
       );
    }
 }
