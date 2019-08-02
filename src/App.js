@@ -63,7 +63,7 @@ class App extends React.Component {
 
 
    render() {
-      const calendar = this.state.calendar;
+      const { calendar, selectedItemId } = this.state;
       return (
          <>
             <div className="App">
@@ -75,15 +75,16 @@ class App extends React.Component {
                            <p key={t.id}>{`${t.from} - ${t.to}`}</p>
                         ))}
                      </div>
-                     {calendar.map(c => (
-                        <div key={c.date} className={`div-inline 
-                     ${() => this.showData(c.date) ? 'hide' : ''}`}
+                     {calendar.map(day => (
+                        <div key={day.date} className={`div-inline 
+                           ${() => this.showData(day.date) ? 'hide' : ''}`}
                         >
-                           <p>{c.date}</p>
-                           {c.timeslots.map(t => (
+                           <p className="header-date">{day.date}</p>
+                           {day.timeslots.map(t => (
                               <p key={t.id}
-                                 className={` ${t.id === this.state.selectedItemId ? 'selected-item' : ''}
-                                 ${t.status === 'free' ? 'status-selected' : ''}`}
+                                 className={` 
+                                    ${t.id === selectedItemId ? 'selected-item' : ''}
+                                    ${t.status === 'free' && 'status-selected'} `}
                                  onClick={t.status === 'free' ? () => this.onSelectItem(t.id) : null}
                               >
                                  {t.status}
@@ -96,8 +97,8 @@ class App extends React.Component {
                   :
                   'empty calendar'}
             </div>
-            <button className='btn' onClick={this.onDayBefore}>{'<'}</button>
-            <button className='btn' onClick={this.onDayAfter}>{'>'}</button>
+            <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
+            <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
          </>
       );
    }
