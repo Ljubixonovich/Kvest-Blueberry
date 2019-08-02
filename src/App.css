@@ -35,6 +35,10 @@ p {
    padding: 5px;
 }
 
+.bold {
+   font-weight: bold;
+}
+
 .status-selected:hover {
    background: orange;
    cursor: pointer;

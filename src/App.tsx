@@ -20,6 +20,7 @@ interface State {
    ],
    selectedItemId: string,
    selectedDayIndex: number,
+   boldedTime: string,
    currentDay: any
 }
 
@@ -31,7 +32,8 @@ class App extends React.Component<any, State> {
          calendar: [] as any,
          selectedItemId: '',
          selectedDayIndex: 0,
-         currentDay: null
+         currentDay: null,
+         boldedTime: ''
       };
       this.onSelectItem = this.onSelectItem.bind(this);
       this.onDayBefore = this.onDayBefore.bind(this);
@@ -59,10 +61,11 @@ class App extends React.Component<any, State> {
          })
    }
 
-   onSelectItem = (id: string) => {
+   onSelectItem = (id: string, fromTime: string) => {
       this.setState(state => ({
          ...state,
-         selectedItemId: id
+         selectedItemId: id,
+         boldedTime: fromTime
       }));
    }
 
@@ -113,7 +116,7 @@ class App extends React.Component<any, State> {
 
 
    render() {
-      const { calendar, selectedItemId, selectedDayIndex } = this.state;
+      const { calendar, selectedItemId, selectedDayIndex, boldedTime } = this.state;
       let days;
       console.log('render', calendar);
       if (calendar && calendar.length > 0 ) {
@@ -133,7 +136,9 @@ class App extends React.Component<any, State> {
                   <div className="div-inline">
                      <p className="header-date">Choose timeslot</p>
                      {calendar[0].timeslots.map((t: any) => (
-                        <p key={t.id}>{`${t.from} - ${t.to}`}</p>
+                        <p className={boldedTime === t.from ? 'bold' : ''} key={t.id}>
+                           {`${t.from} - ${t.to}`}
+                        </p>
                      ))}
                   </div>
 
@@ -148,7 +153,7 @@ class App extends React.Component<any, State> {
                                  ${t.id === selectedItemId ? 'selected-item' : ''}
                                  ${t.status === 'free' && 'status-selected'} `}
                               onClick={t.status === 'free' ? 
-                                 () => this.onSelectItem(t.id) : null}
+                                 () => this.onSelectItem(t.id, t.from) : null}
                            >
                               {t.status}
                            </p>
