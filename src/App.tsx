@@ -19,6 +19,8 @@ interface State {
       }
    ],
    numberOfSelectedItems: number,
+   hover: boolean,
+   hoverItemId: string,
    selectedItemId: string,
    selectedDayIndex: number,
    boldedTime: string,
@@ -32,6 +34,8 @@ class App extends React.Component<any, State> {
       this.state = {
          calendar: [] as any,
          numberOfSelectedItems: 1,
+         hover: false,
+         hoverItemId: '',
          selectedItemId: '',
          selectedDayIndex: 0,
          boldedTime: '',
@@ -42,6 +46,7 @@ class App extends React.Component<any, State> {
       this.onDayAfter = this.onDayAfter.bind(this);
       this.showData = this.showData.bind(this);
       this.onSelectChange = this.onSelectChange.bind(this);
+      this.toggleHover = this.toggleHover.bind(this);
    }
 
    componentDidMount() {
@@ -70,6 +75,19 @@ class App extends React.Component<any, State> {
          ...state,
          numberOfSelectedItems: value
       }));
+   }
+
+   toggleHover = (isStatusFree: boolean, e: React.FormEvent<HTMLParagraphElement>, id: string) => {      
+      if (!isStatusFree) {
+         return;
+      }
+      let newId = e.type === 'mouseenter' ? id : '';
+
+      this.setState(state => ({
+         ...state,
+         hover: !state.hover,
+         hoverItemId: newId
+      }))
    }
 
    onSelectItem = (id: string, fromTime: string) => {
@@ -132,7 +150,9 @@ class App extends React.Component<any, State> {
          selectedItemId, 
          selectedDayIndex, 
          boldedTime, 
-         numberOfSelectedItems 
+         numberOfSelectedItems,
+         hover,
+         hoverItemId
       } = this.state;
       let days;
       
@@ -168,10 +188,14 @@ class App extends React.Component<any, State> {
                      >
                         <p className="header-date">{day.date}</p>
                         {day.timeslots.map((t: any) => (
-                           <p key={t.id}
+                           // cell element
+                           <p key={t.id} 
+                              onMouseEnter={(e) => this.toggleHover(t.status === 'free', e, t.id)} 
+                              onMouseLeave={(e) => this.toggleHover(t.status === 'free', e, t.id)}
                               className={` 
                               ${t.id === selectedItemId ? 'selected-item' : ''}
-                              ${t.status === 'free' && 'status-selected'} `}
+                              ${t.status === 'free' && hover && t.id === hoverItemId && 'status-selected'} 
+                              `}
                               onClick={t.status === 'free' ?
                                  () => this.onSelectItem(t.id, t.from) : null}
                            >

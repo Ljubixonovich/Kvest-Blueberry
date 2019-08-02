@@ -44,7 +44,7 @@ p {
    font-weight: bold;
 }
 
-.status-selected:hover {
+.status-selected {
    background: orange;
    cursor: pointer;
 }
