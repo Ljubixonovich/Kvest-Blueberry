@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import './App.css';
 
 
@@ -77,20 +77,35 @@ class App extends React.Component<any, State> {
       }));
    }
 
-   toggleHover = (isStatusFree: boolean, e: React.FormEvent<HTMLParagraphElement>, id: string) => {      
-      if (!isStatusFree) {
-         return;
-      }
-      let newId = e.type === 'mouseenter' ? id : '';
+   toggleHover = ( day: any, timeslot: any, e: React.FormEvent<HTMLParagraphElement>) => {  
+         if (timeslot.status !== 'free') {
+            return;
+         }
 
-      this.setState(state => ({
-         ...state,
-         hover: !state.hover,
-         hoverItemId: newId
-      }))
+         const {numberOfSelectedItems} = this.state;
+         let statuses = day.timeslots.map((t: any) => t.status);
+         console.log('statuses', statuses);       
+         
+         this.check(statuses, numberOfSelectedItems);
+        
+         let newId = e.type === 'mouseenter' ? timeslot.id : '';
+
+         this.setState(state => ({
+            ...state,
+            hover: !state.hover,
+            hoverItemId: newId
+         }))
+   }
+
+   check = (statuses: string[], numberOfSelectedItems: number) => {
+      return true;
    }
 
    onSelectItem = (id: string, fromTime: string) => {
+      const {hoverItemId} = this.state;
+      console.log(`id: ${id}, hoverItemId: ${hoverItemId}`);
+      // setuj u toogle hoverItemsIds i onda ih ovde ubaci u selectedItemsIds
+      // posle setuj boldedTimes
       this.setState(state => ({
          ...state,
          selectedItemId: id,
@@ -190,8 +205,8 @@ class App extends React.Component<any, State> {
                         {day.timeslots.map((t: any) => (
                            // cell element
                            <p key={t.id} 
-                              onMouseEnter={(e) => this.toggleHover(t.status === 'free', e, t.id)} 
-                              onMouseLeave={(e) => this.toggleHover(t.status === 'free', e, t.id)}
+                              onMouseEnter={(e) => this.toggleHover(day, t, e)} 
+                              onMouseLeave={(e) => this.toggleHover(day, t, e)}
                               className={` 
                               ${t.id === selectedItemId ? 'selected-item' : ''}
                               ${t.status === 'free' && hover && t.id === hoverItemId && 'status-selected'} 

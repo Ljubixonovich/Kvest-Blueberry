@@ -27,8 +27,7 @@ body {
 }
 
 .div-inline {
-   display:inline-block;
-   padding: 10px;
+   display:inline-block;  
 }
 
 .header-date {
@@ -37,7 +36,8 @@ body {
 
 p {
    border: 1px solid gray;
-   padding: 5px;
+   padding: 12px;
+   margin: 0;
 }
 
 .bold {
