@@ -20,10 +20,18 @@ interface State {
    ],
    numberOfSelectedItems: number,
    hover: boolean,
+
    hoverItemId: string,
+   hoverItemsIds: string[],
+
    selectedItemId: string,
+   selectedItemsIds: string[],
+
    selectedDayIndex: number,
+
    boldedTime: string,
+   boldedTimes: string[], 
+
    currentDay: any
 }
 
@@ -36,9 +44,12 @@ class App extends React.Component<any, State> {
          numberOfSelectedItems: 1,
          hover: false,
          hoverItemId: '',
-         selectedItemId: '',
+         hoverItemsIds: [] as any,
+         selectedItemId: '', 
+         selectedItemsIds: [] as any,        
          selectedDayIndex: 0,
          boldedTime: '',
+         boldedTimes: [] as any,
          currentDay: null         
       };
       this.onSelectItem = this.onSelectItem.bind(this);
@@ -82,34 +93,81 @@ class App extends React.Component<any, State> {
             return;
          }
 
-         const {numberOfSelectedItems} = this.state;
+         const { numberOfSelectedItems } = this.state;
          let statuses = day.timeslots.map((t: any) => t.status);
          console.log('statuses', statuses);       
          
-         this.check(statuses, numberOfSelectedItems);
-        
-         let newId = e.type === 'mouseenter' ? timeslot.id : '';
+         let ids = this.getIds(
+            statuses,
+            numberOfSelectedItems, 
+            day.timeslots, 
+            timeslot.id
+         );
+         ids = e.type === 'mouseenter' ? ids : [] as any;
+
+         let newId = e.type === 'mouseenter' ? timeslot.id : '';         
 
          this.setState(state => ({
             ...state,
             hover: !state.hover,
-            hoverItemId: newId
+            hoverItemId: newId,
+            hoverItemsIds: ids
          }))
    }
 
-   check = (statuses: string[], numberOfSelectedItems: number) => {
-      return true;
+   getIds = (statuses: string[], numberOfSelectedItems: number, 
+      timeslots: any, currentId: string) => {
+      console.log('check', statuses);
+      let ids: string[] = [] as any;
+
+      // currentIndex of hover      
+      switch (numberOfSelectedItems) {
+         case 1:
+            ids.push(currentId);
+            break;
+
+         case 3:
+            
+            break;
+
+         case 6:
+            let filteredStatuses = statuses.filter(s => s === 'free');
+            if (filteredStatuses.length === statuses.length) {
+               timeslots.forEach((t: any) => {
+                  ids.push(t.id);
+               })
+            }
+            break;
+      
+         default:
+            break;
+      }
+
+
+
+      return ids;
    }
 
-   onSelectItem = (id: string, fromTime: string) => {
-      const {hoverItemId} = this.state;
-      console.log(`id: ${id}, hoverItemId: ${hoverItemId}`);
-      // setuj u toogle hoverItemsIds i onda ih ovde ubaci u selectedItemsIds
-      // posle setuj boldedTimes
+   onSelectItem = (timeslots: any) => {
+      const { hoverItemsIds } = this.state;
+      let allTimesFrom = timeslots.map((t: any) => {
+         return {
+            from: t.from,
+            id: t.id
+         }});
+      let response: string[] = [] as any;
+      allTimesFrom.forEach((t: any) => {
+         if (hoverItemsIds.includes(t.id)) {
+            response.push(t.from);
+         }
+      });
+
+      console.log('response', response);
+      
       this.setState(state => ({
          ...state,
-         selectedItemId: id,
-         boldedTime: fromTime
+         selectedItemsIds: hoverItemsIds,
+         boldedTimes: response
       }));
    }
 
@@ -162,12 +220,15 @@ class App extends React.Component<any, State> {
    render() {
       const { 
          calendar, 
-         selectedItemId, 
+         // selectedItemId, 
+         selectedItemsIds,
          selectedDayIndex, 
-         boldedTime, 
+         // boldedTime, 
+         boldedTimes,
          numberOfSelectedItems,
          hover,
-         hoverItemId
+         // hoverItemId,
+         hoverItemsIds
       } = this.state;
       let days;
       
@@ -191,7 +252,7 @@ class App extends React.Component<any, State> {
                   <div className="div-inline">
                      <p className="header-date">Choose timeslot</p>
                      {calendar[0].timeslots.map((t: any) => (
-                        <p className={boldedTime === t.from ? 'bold' : ''} key={t.id}>
+                        <p className={boldedTimes.includes(t.from) ? 'bold' : ''} key={t.id}>
                            {`${t.from} - ${t.to}`}
                         </p>
                      ))}
@@ -208,11 +269,12 @@ class App extends React.Component<any, State> {
                               onMouseEnter={(e) => this.toggleHover(day, t, e)} 
                               onMouseLeave={(e) => this.toggleHover(day, t, e)}
                               className={` 
-                              ${t.id === selectedItemId ? 'selected-item' : ''}
-                              ${t.status === 'free' && hover && t.id === hoverItemId && 'status-selected'} 
+                              ${selectedItemsIds.includes(t.id) ? 'selected-item' : ''}
+                              ${t.status === 'free' && hover && hoverItemsIds.includes(t.id) && 'status-selected'}
+
                               `}
                               onClick={t.status === 'free' ?
-                                 () => this.onSelectItem(t.id, t.from) : null}
+                                 () => this.onSelectItem(day.timeslots) : null}
                            >
                               {t.status}
                            </p>
