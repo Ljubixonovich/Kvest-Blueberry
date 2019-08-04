@@ -1,7 +1,6 @@
 import * as React from 'react';
 import './App.css';
 
-
 const daysPerPage = 3;
 
 interface State {
@@ -20,18 +19,10 @@ interface State {
    ],
    numberOfSelectedItems: number,
    hover: boolean,
-
-   hoverItemId: string,
    hoverItemsIds: string[],
-
-   selectedItemId: string,
    selectedItemsIds: string[],
-
    selectedDayIndex: number,
-
-   boldedTime: string,
-   boldedTimes: string[], 
-
+   boldedTimes: string[],
    currentDay: any
 }
 
@@ -43,14 +34,11 @@ class App extends React.Component<any, State> {
          calendar: [] as any,
          numberOfSelectedItems: 1,
          hover: false,
-         hoverItemId: '',
          hoverItemsIds: [] as any,
-         selectedItemId: '', 
-         selectedItemsIds: [] as any,        
+         selectedItemsIds: [] as any,
          selectedDayIndex: 0,
-         boldedTime: '',
          boldedTimes: [] as any,
-         currentDay: null         
+         currentDay: null
       };
       this.onSelectItem = this.onSelectItem.bind(this);
       this.onDayBefore = this.onDayBefore.bind(this);
@@ -79,8 +67,8 @@ class App extends React.Component<any, State> {
             console.log('fetch error', error);
          })
    }
-
-   onSelectChange = (e: React.FormEvent<HTMLSelectElement>) => {      
+   
+   onSelectChange = (e: React.FormEvent<HTMLSelectElement>) => {
       const value = +e.currentTarget.value;
       this.setState(state => ({
          ...state,
@@ -88,46 +76,40 @@ class App extends React.Component<any, State> {
       }));
    }
 
-   toggleHover = ( day: any, timeslot: any, e: React.FormEvent<HTMLParagraphElement>) => {  
-         if (timeslot.status !== 'free') {
-            return;
-         }
+   toggleHover = (day: any, timeslot: any,
+      e: React.FormEvent<HTMLParagraphElement>, index: number) => {
+      if (timeslot.status !== 'free') {
+         return;
+      }
 
-         const { numberOfSelectedItems } = this.state;
-         let statuses = day.timeslots.map((t: any) => t.status);
-         console.log('statuses', statuses);       
-         
-         let ids = this.getIds(
-            statuses,
-            numberOfSelectedItems, 
-            day.timeslots, 
-            timeslot.id
-         );
-         ids = e.type === 'mouseenter' ? ids : [] as any;
+      let statuses = day.timeslots.map((t: any) => t.status);
 
-         let newId = e.type === 'mouseenter' ? timeslot.id : '';         
+      let selectedIds = this.getHoveredIds(
+         statuses,
+         day.timeslots,
+         timeslot.id,
+         index
+      );
+      selectedIds = e.type === 'mouseenter' ? selectedIds : [] as any;
 
-         this.setState(state => ({
-            ...state,
-            hover: !state.hover,
-            hoverItemId: newId,
-            hoverItemsIds: ids
-         }))
+      this.setState(state => ({
+         ...state,
+         hover: !state.hover,
+         hoverItemsIds: selectedIds
+      }));
    }
 
-   getIds = (statuses: string[], numberOfSelectedItems: number, 
-      timeslots: any, currentId: string) => {
-      console.log('check', statuses);
+   getHoveredIds = (statuses: string[], timeslots: any, currentId: string, currentIndex: number) => {
+      const { numberOfSelectedItems } = this.state;
       let ids: string[] = [] as any;
 
-      // currentIndex of hover      
       switch (numberOfSelectedItems) {
          case 1:
             ids.push(currentId);
             break;
 
          case 3:
-            
+            ids = this.getIdsFor3InSelect(timeslots, currentIndex);           
             break;
 
          case 6:
@@ -138,36 +120,112 @@ class App extends React.Component<any, State> {
                })
             }
             break;
-      
+
          default:
             break;
       }
 
+      return ids;
+   }
 
+   getIdsFor3InSelect = (timeslots: any, currentIndex: number) => {
+      // When 3 is selected in select - this chec is run
+      let allTimesFrom: any[] = timeslots.map((t: any, index: any) => {
+         return {
+            from: t.from,
+            id: t.id,
+            listIndex: index,
+            status: t.status
+         }
+      });
+      
+      let ids: string[] = [] as any;
+      allTimesFrom.forEach((t: any, index: number) => {
+         // is first
+         if (currentIndex === 0 &&  currentIndex === t.listIndex && 
+            allTimesFrom[index + 1] && allTimesFrom[index + 1].status === 'free' &&
+            allTimesFrom[index + 2] && allTimesFrom[index + 2].status === 'free'
+         ) {
+            ids.push(t.id);
+            ids.push(allTimesFrom[index + 1].id);
+            ids.push(allTimesFrom[index + 2].id);
+         }
+
+         // is last
+         else if (currentIndex === allTimesFrom.length - 1 
+            && currentIndex === t.listIndex &&
+            allTimesFrom[index - 1] && allTimesFrom[index - 1].status === 'free' &&
+            allTimesFrom[index - 2] && allTimesFrom[index - 2].status === 'free'
+         ) {
+            ids.push(t.id);
+            ids.push(allTimesFrom[index - 1].id);
+            ids.push(allTimesFrom[index - 2].id);
+         }
+
+         // in the middle
+         else if (currentIndex > 0 && currentIndex < allTimesFrom.length - 1 && 
+            currentIndex === t.listIndex)  {
+            if (allTimesFrom[index + 1] && allTimesFrom[index + 1].status === 'free' &&
+            allTimesFrom[index + 2] && allTimesFrom[index + 2].status === 'free') {
+               ids.push(t.id);
+               ids.push(allTimesFrom[index + 1].id);
+               ids.push(allTimesFrom[index + 2].id);  
+            } else if (allTimesFrom[index + 1] && allTimesFrom[index + 1].status === 'free' &&
+            allTimesFrom[index - 1] && allTimesFrom[index - 1].status === 'free') {
+               ids.push(t.id);
+               ids.push(allTimesFrom[index + 1].id);
+               ids.push(allTimesFrom[index - 1].id);
+            } else if (allTimesFrom[index - 1] && allTimesFrom[index - 1].status === 'free' &&
+            allTimesFrom[index - 2] && allTimesFrom[index - 2].status === 'free') {
+               ids.push(t.id);
+               ids.push(allTimesFrom[index - 1].id);
+               ids.push(allTimesFrom[index - 2].id);
+            }
+         }
+      });
 
       return ids;
    }
 
-   onSelectItem = (timeslots: any) => {
-      const { hoverItemsIds } = this.state;
-      let allTimesFrom = timeslots.map((t: any) => {
+   onSelectItem = (timeslots: any, currentIndex: number) => {
+      const { hoverItemsIds, numberOfSelectedItems } = this.state;
+
+      if (numberOfSelectedItems === 6) {
+         let statuses = timeslots.map((t: any) => t.status);
+         let filteredStatuses = statuses.filter((s: any) => s === 'free');
+         if (filteredStatuses.length !== statuses.length) {
+            return;
+         }         
+      }
+      if (numberOfSelectedItems === 3) {
+         let ids = this.getIdsFor3InSelect(timeslots, currentIndex);
+         if (ids.length === 0) {
+            return;
+         }
+      } 
+
+      let allTimesFrom = timeslots.map((t: any, index: number) => {
          return {
             from: t.from,
-            id: t.id
-         }});
-      let response: string[] = [] as any;
+            id: t.id,
+            listIndex: index,
+            status: t.status
+         }
+      });     
+
+
+      let bolded: string[] = [] as any;     
+      
       allTimesFrom.forEach((t: any) => {
          if (hoverItemsIds.includes(t.id)) {
-            response.push(t.from);
+            bolded.push(t.from);
          }
       });
 
-      console.log('response', response);
-      
       this.setState(state => ({
          ...state,
          selectedItemsIds: hoverItemsIds,
-         boldedTimes: response
+         boldedTimes: bolded
       }));
    }
 
@@ -218,73 +276,71 @@ class App extends React.Component<any, State> {
 
 
    render() {
-      const { 
+      const {
          calendar, 
-         // selectedItemId, 
          selectedItemsIds,
-         selectedDayIndex, 
-         // boldedTime, 
+         selectedDayIndex,
          boldedTimes,
          numberOfSelectedItems,
          hover,
-         // hoverItemId,
          hoverItemsIds
       } = this.state;
       let days;
-      
+
       if (calendar && calendar.length > 0) {
          days = this.getDaysForDisplay(calendar, selectedDayIndex);
       }
       return (
          <>
-         {calendar && calendar.length > 0 ?
-            <div className="App">
-               <select className='select' onChange={(e) => this.onSelectChange(e)} 
-                  value={numberOfSelectedItems}>
-                  <option value={1}>1</option>
-                  <option value={3}>3</option>
-                  <option value={6}>6</option>
-               </select>
-               <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
-               <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
-       
-               <div>
-                  <div className="div-inline">
-                     <p className="header-date">Choose timeslot</p>
-                     {calendar[0].timeslots.map((t: any) => (
-                        <p className={boldedTimes.includes(t.from) ? 'bold' : ''} key={t.id}>
-                           {`${t.from} - ${t.to}`}
-                        </p>
-                     ))}
-                  </div>
+            {calendar && calendar.length > 0 ?
+               <div className="App">
+                  <select className='select' onChange={(e) => this.onSelectChange(e)}
+                     value={numberOfSelectedItems}>
+                     <option value={1}>1</option>
+                     <option value={3}>3</option>
+                     <option value={6}>6</option>
+                  </select>
+                  <button id='btn-left' onClick={this.onDayBefore}>{'<'}</button>
+                  <button id='btn-right' onClick={this.onDayAfter}>{'>'}</button>
 
-                  {days.map((day, index) => (
-                     <div key={index} className={`div-inline 
-                     ${() => this.showData(day.date) ? 'hide' : ''}`}
-                     >
-                        <p className="header-date">{day.date}</p>
-                        {day.timeslots.map((t: any) => (
-                           // cell element
-                           <p key={t.id} 
-                              onMouseEnter={(e) => this.toggleHover(day, t, e)} 
-                              onMouseLeave={(e) => this.toggleHover(day, t, e)}
-                              className={` 
-                              ${selectedItemsIds.includes(t.id) ? 'selected-item' : ''}
-                              ${t.status === 'free' && hover && hoverItemsIds.includes(t.id) && 'status-selected'}
-
-                              `}
-                              onClick={t.status === 'free' ?
-                                 () => this.onSelectItem(day.timeslots) : null}
-                           >
-                              {t.status}
+                  <div>
+                     <div className="div-inline">
+                        <p className="header-date">Choose timeslot</p>
+                        {calendar[0].timeslots.map((t: any) => (
+                           <p className={boldedTimes.includes(t.from) ? 'bold' : ''} key={t.id}>
+                              {`${t.from} - ${t.to}`}
                            </p>
                         ))}
                      </div>
-                  ))}
+
+                     {days.map((day, index) => (
+                        <div key={index} className={`div-inline 
+                     ${() => this.showData(day.date) ? 'hide' : ''}`}
+                        >
+                           <p className="header-date">{day.date}</p>
+                           {day.timeslots.map((t: any, index: number) => (
+                              // cell element
+                              <p key={t.id}
+                                 onMouseEnter={(e) => this.toggleHover(day, t, e, index)}
+                                 onMouseLeave={(e) => this.toggleHover(day, t, e, index)}
+                                 className={` 
+                              ${selectedItemsIds.includes(t.id) ? 'selected-item' : ''}
+
+                              ${hover && hoverItemsIds.includes(t.id) && 'hover'}
+
+                              `}
+                                 onClick={t.status === 'free' ?
+                                    () => this.onSelectItem(day.timeslots, index) : null}
+                              >
+                                 {t.status}
+                              </p>
+                           ))}
+                        </div>
+                     ))}
+                  </div>
                </div>
-            </div>
-            :
-            'empty calendar'}
+               :
+               'empty calendar'}
          </>
       );
    }
